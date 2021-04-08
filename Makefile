@@ -55,9 +55,9 @@ sif: $(SIF)
 jupyter-mav2: $(SIF)
 	sbatch -A $(ALLOCATION) scripts/mav2.jupytersing $(SIF)
 	echo '' > jupyter.out
-	watch -n 10 tail jupyter.out
+	tail -f jupyter.out
 
 jupyter-frontera: $(SIF)
 	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing $(SIF)
 	echo '' > jupyter.out
-	watch -n 10 tail jupyter.out
+	tail -f jupyter.out

@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 #-----------------------------------------------------------------------------
-# Ethan Ho 2/8/2021
+# Ethan Ho 4/8/2021
 #
 # Like Maverick2's /share/doc/slurm/job.jupyter, but runs jupyter-notebook in a
 # Singularity container. The container must be saved as a SIF file, and its
 # POSIX path should be specified by setting the SIMG variable below.
 #
-# To submit the job, issue: "sbatch scripts/mav2.jupytersing -i /work/06634/eho/singularity_images/deeplabcut_2_1_10.sif"
+# To submit the job, issue: sbatch scripts/mav2.jupytersing ./my_image.sif
 #
 # For more information, please consult the User Guide at:
 #
@@ -21,31 +21,30 @@
 #SBATCH -n 1                          # Total number of mpi tasks requested
 #SBATCH -t 02:00:00                   # Run time (hh:mm:ss) - 4 hours
 
-SIMG=$1
+# module configuration
+echo "TACC: unloading xalt"
+module unload xalt
+module load cuda/10.1
+module load cudnn nccl tacc-singularity
+module list
 
 #--------------------------------------------------------------------------
 # ---- You normally should not need to edit anything below this point -----
 #--------------------------------------------------------------------------
 
+SIMG=$1
+SING_MOUNT_OPTS=
 echo job $SLURM_JOB_ID execution at: `date`
 
 # our node name
 NODE_HOSTNAME=`hostname -s`
 echo "TACC: running on node $NODE_HOSTNAME"
 
-echo "TACC: unloading xalt"
-module unload xalt
-
-# load modules. These are specific to the container enho/deeplabcut:2.1.10
-module load cuda/10.1
-module load cudnn nccl tacc-singularity
-module list
-
-# IPYTHON_BIN is a singularity exec command
+# replace IPYTHON_BIN with a singularity exec command
 if [ ! -f ${SIMG} ]; then
     echo "TACC: ERROR - could not find a SIF file at ${SIMG}"
 fi
-IPYTHON_BIN="singularity exec --nv --home $PWD ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
+IPYTHON_BIN="singularity exec --nv --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter

@@ -1,7 +1,4 @@
-PYTHON ?= python3
-IMAGE ?= enho/deeplabcut:2.1.10
-ALLOCATION ?= SD2E-Community
-SIF ?= ./deeplabcut_2_1_10.sif
+include config.mk
 
 # ------------------------------- Sanity checks -------------------------------
 
@@ -36,7 +33,7 @@ git:
 
 # ---------------------------- Docker/Singularity -----------------------------
 
-image: | docker
+image: | docker	
 	docker build -t $(IMAGE) .
 
 shell: image | docker

@@ -33,7 +33,7 @@ git:
 
 # ---------------------------- Docker/Singularity -----------------------------
 
-image: | docker	
+image: | docker
 	docker build -t $(IMAGE) .
 
 shell: image | docker
@@ -42,20 +42,22 @@ shell: image | docker
 push: image | docker
 	docker push $(IMAGE)
 
-$(SIF): | singularity
+$(SIF):
 	singularity pull $@ docker://$(IMAGE)
 
 sing-shell: $(SIF) | singularity
 	singularity shell --nv --home $$PWD $(SIF)
 
 sif: $(SIF)
-  
+
 # ----------------------------- Jupyter ---------------------------------------
 
 jupyter-mav2: $(SIF)
-	sbatch -A $(ALLOCATION) scripts/mav2.jupytersing -i $(SIF)
+	sbatch -A $(ALLOCATION) scripts/mav2.jupytersing $(SIF)
+	echo '' > jupyter.out
 	watch -n 10 tail jupyter.out
 
 jupyter-frontera: $(SIF)
-	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing -i $(SIF)
+	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing $(SIF)
+	echo '' > jupyter.out
 	watch -n 10 tail jupyter.out

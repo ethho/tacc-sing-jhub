@@ -33,8 +33,10 @@ git:
 
 # ---------------------------- Docker/Singularity -----------------------------
 
-image: | docker
-	docker build -t $(IMAGE) .
+image: $(CONDA_ENV) | docker
+	docker build -t $(IMAGE) \
+		--build-arg CONDA_ENV="$<" \
+		.
 
 shell: image | docker
 	docker run --rm -it $(IMAGE) bash

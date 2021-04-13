@@ -54,12 +54,14 @@ sif: $(SIF)
 
 # ----------------------------- Jupyter ---------------------------------------
 
-jupyter-mav2: $(SIF)
-	sbatch -A $(ALLOCATION) scripts/mav2.jupytersing $(SIF)
+jupyter-mav2: $(SIF) $(DOTENV)
+	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing \
+		-i $(SIF) -e $(word 2, $^)
 	echo '' > jupyter.out
 	tail -f jupyter.out
 
-jupyter-frontera: $(SIF)
-	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing $(SIF)
+jupyter-frontera: $(SIF) $(DOTENV)
+	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing \
+		-i $(SIF) -e $(word 2, $^)
 	echo '' > jupyter.out
 	tail -f jupyter.out

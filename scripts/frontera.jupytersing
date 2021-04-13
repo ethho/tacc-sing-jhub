@@ -5,21 +5,30 @@
 #
 # Like Frontera's /share/doc/slurm/job.jupyter, but runs jupyter-notebook in a
 # Singularity container. The container must be saved as a SIF file, and its
-# POSIX path should be specified by setting the SIMG variable below.
+# POSIX path should be specified by setting the SIF variable below.
 #
-# To submit the job, issue: sbatch scripts/mav2.jupytersing ./my_image.sif
+# To submit the job, issue: sbatch scripts/mav2.jupytersing -i ./my_image.sif
+#
+# You can also provide a path to an env file that is sourced OUTSIDE the
+# the container. For instance, to set the env variable SINGULARITY_SHELL, which
+# is set as env variable SHELL inside the container, write an env file my_env.env:
+#
+# SINGULARITY_SHELL="/bin/bash"
+#
+# and pass the path to env file using the -e option:
+#
+# sbatch scripts/mav2.jupytersing -i ./my_image.sif -e my_env.env
 #
 # For more information, please consult the User Guide at:
-#
-# http://www.tacc.utexas.edu/user-services/user-guides/frontera-user-guide
+# http://www.tacc.utexas.edu/user-services/user-guides/maverick2-user-guide
 #-----------------------------------------------------------------------------
 #
 #SBATCH -J tvp_jupyter_sing           # Job name
 #SBATCH -o jupyter.out                # Name of stdout output file (%j expands to jobId)
-#SBATCH -p rtx-dev
+#SBATCH -p rtx-dev                    # Queue name
 #SBATCH -N 1                          # Total number of nodes requested (56 cores/node)
 #SBATCH -n 1                          # Total number of mpi tasks requested
-#SBATCH -t 01:00:00                   # Run time (hh:mm:ss) - 1 hours
+#SBATCH -t 02:00:00                   # Run time (hh:mm:ss) - 2 hours
 
 # module configuration
 echo "TACC: unloading xalt"
@@ -32,21 +41,46 @@ module list
 # ---- You normally should not need to edit anything below this point -----
 #--------------------------------------------------------------------------
 
-SIMG=$1
-SING_MOUNT_OPTS=
-echo job $SLURM_JOB_ID execution at: `date`
+# getopts
+OPTIND=1
+SIF=
+DOTENV=
+while getopts "h?i:e:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    i)  SIF=$OPTARG
+        ;;
+    e)  DOTENV=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "${1:-}" = "--" ] && shift
+
 
 # our node name
+echo job $SLURM_JOB_ID execution at: `date`
 NODE_HOSTNAME=`hostname -s`
 echo "TACC: running on node $NODE_HOSTNAME"
 
 # replace IPYTHON_BIN with a singularity exec command
-if [ ! -f ${SIMG} ]; then
-    echo "TACC: ERROR - could not find a SIF file at ${SIMG}"
+if [ ! -f ${SIF} ]; then
+    echo "TACC: WARNING - could not find a SIF file at ${SIF}"
 fi
-export SINGULARITY_CACHEDIR="$STOCKYARD2/singularity_cache"
-echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
-IPYTHON_BIN="singularity exec --nv --env-file dotenv --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
+
+# configure singularity runtime
+if [[ ! -z ${DOTENV} & -f ${DOTENV} ]]; then
+    echo "TACC: using DOTENV=${DOTENV}"
+    source ${DOTENV}
+fi
+SING_OPTS="--nv --home ${PWD} --bind /work2"
+
+# entrypoint command
+echo "TACC: using singularity version $(singularity version)"
+IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} jupyter-notebook"
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter

@@ -1,16 +1,25 @@
 #!/bin/bash
 #
 #-----------------------------------------------------------------------------
-# Ethan Ho 4/8/2021
+# Ethan Ho 4/13/2021
 #
 # Like Maverick2's /share/doc/slurm/job.jupyter, but runs jupyter-notebook in a
 # Singularity container. The container must be saved as a SIF file, and its
-# POSIX path should be specified by setting the SIMG variable below.
+# POSIX path should be specified by setting the SIF variable below.
 #
-# To submit the job, issue: sbatch scripts/mav2.jupytersing ./my_image.sif
+# To submit the job, issue: sbatch scripts/mav2.jupytersing -i ./my_image.sif
+# 
+# You can also provide a path to an env file that is sourced OUTSIDE the
+# the container. For instance, to set the env variable SINGULARITYENV_SHELL, which
+# is set as env variable SHELL inside the container, write an env file my_env.env:
+#
+# SINGULARITYENV_SHELL="/bin/bash"
+#
+# and pass the path to env file using the -e option:
+#
+# sbatch scripts/mav2.jupytersing -i ./my_image.sif -e my_env.env
 #
 # For more information, please consult the User Guide at:
-#
 # http://www.tacc.utexas.edu/user-services/user-guides/maverick2-user-guide
 #-----------------------------------------------------------------------------
 #
@@ -19,7 +28,7 @@
 #SBATCH -p gtx                        # Queue name
 #SBATCH -N 1                          # Total number of nodes requested (56 cores/node)
 #SBATCH -n 1                          # Total number of mpi tasks requested
-#SBATCH -t 02:00:00                   # Run time (hh:mm:ss) - 4 hours
+#SBATCH -t 02:00:00                   # Run time (hh:mm:ss) - 2 hours
 
 # module configuration
 echo "TACC: unloading xalt"
@@ -32,29 +41,52 @@ module list
 # ---- You normally should not need to edit anything below this point -----
 #--------------------------------------------------------------------------
 
-SIMG=$1
-SING_MOUNT_OPTS=
-echo job $SLURM_JOB_ID execution at: `date`
+# getopts
+OPTIND=1
+SIF=
+DOTENV=
+URL=
+while getopts "i:e:u:" opt; do
+    case "$opt" in
+    i)  SIF=$OPTARG
+        ;;
+    e)  DOTENV=$OPTARG
+        ;;
+    u)  URL=$OPTARG
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "${1:-}" = "--" ] && shift
 
 # our node name
+echo job $SLURM_JOB_ID execution at: `date`
 NODE_HOSTNAME=`hostname -s`
 echo "TACC: running on node $NODE_HOSTNAME"
 
-# set cache for python packages
-export SINGULARITYENV_PYTHONUSERBASE="$STOCKYARD2/jupyter_packages"
-export SINGULARITYENV_JUPYTER_PATH="$STOCKYARD2/jupyter_packages/share/jupyter:"
-export SINGULARITYENV_JUPYTER_WORK="$STOCKYARD2/jupyter_packages"
-export SINGULARITYENV_LOCAL_ENVS="$STOCKYARD2/jupyter_packages/envs"
-export SINGULARITYENV_CONDA_ENVS_PATH="$STOCKYARD2/jupyter_packages/envs:"
-export SINGULARITYENV_CONDA_PKGS_DIRS="$STOCKYARD2/jupyter_packages/pkgs"
-export SINGULARITY_CACHEDIR="$STOCKYARD2/singularity_cache"
-echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
-
-# replace IPYTHON_BIN with a singularity exec command
-if [ ! -f ${SIMG} ]; then
-    echo "TACC: ERROR - could not find a SIF file at ${SIMG}"
+# configure singularity runtime
+if [ ! -z ${DOTENV} ] ; then
+    if [ -f ${DOTENV} ]; then
+        echo "using DOTENV=${DOTENV}"
+        export $(grep -v '^#' ${DOTENV} | xargs | envsubst)
+    else
+        echo "could not find env file at DOTENV=${DOTENV}"
+        exit 1
+    fi
 fi
-IPYTHON_BIN="singularity exec --nv --bind /work2 --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
+SING_OPTS="--nv --home ${PWD} --bind /work2"
+
+# pull image if does not exist
+echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
+if [ ! -f ${SIF} ]; then
+    echo "TACC: pulling Singularity image to ${SIF}"
+    singularity pull ${SIF} ${URL}
+fi
+
+# entrypoint command
+echo "TACC: using singularity version $(singularity version)"
+IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} $@"
+echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter
 IP_CONFIG=$NB_SERVERDIR/jupyter_notebook_config.py
@@ -72,6 +104,7 @@ echo "TACC: using jupyter command: $IPYTHON_BIN $IPYTHON_ARGS"
 nohup $IPYTHON_BIN $IPYTHON_ARGS &> $JUPYTER_LOGFILE && rm $NB_SERVERDIR/.jupyter_lock &
 IPYTHON_PID=$!
 echo "$NODE_HOSTNAME $IPYTHON_PID" > $NB_SERVERDIR/.jupyter_lock
+echo "TACC: sleeping for 60 seconds..."
 sleep 60
 JUPYTER_TOKEN=`grep -m 1 'token=' $JUPYTER_LOGFILE | cut -d'?' -f 2`
 LOCAL_IPY_PORT=5902

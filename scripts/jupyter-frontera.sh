@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #-----------------------------------------------------------------------------
-# Ethan Ho 4/8/2021
+# Ethan Ho 4/13/2021
 #
 # Like Frontera's /share/doc/slurm/job.jupyter, but runs jupyter-notebook in a
 # Singularity container. The container must be saved as a SIF file, and its
@@ -10,17 +10,17 @@
 # To submit the job, issue: sbatch scripts/mav2.jupytersing -i ./my_image.sif
 #
 # You can also provide a path to an env file that is sourced OUTSIDE the
-# the container. For instance, to set the env variable SINGULARITY_SHELL, which
+# the container. For instance, to set the env variable SINGULARITYENV_SHELL, which
 # is set as env variable SHELL inside the container, write an env file my_env.env:
 #
-# SINGULARITY_SHELL="/bin/bash"
+# SINGULARITYENV_SHELL="/bin/bash"
 #
 # and pass the path to env file using the -e option:
 #
 # sbatch scripts/mav2.jupytersing -i ./my_image.sif -e my_env.env
 #
 # For more information, please consult the User Guide at:
-# http://www.tacc.utexas.edu/user-services/user-guides/maverick2-user-guide
+# https://frontera-portal.tacc.utexas.edu/user-guide/
 #-----------------------------------------------------------------------------
 #
 #SBATCH -J tvp_jupyter_sing           # Job name
@@ -45,38 +45,47 @@ module list
 OPTIND=1
 SIF=
 DOTENV=
+URL=
 while getopts "i:e:" opt; do
     case "$opt" in
     i)  SIF=$OPTARG
         ;;
     e)  DOTENV=$OPTARG
         ;;
+    u)  URL=$OPTARG
+        ;;
     esac
 done
 shift $((OPTIND-1))
 [ "${1:-}" = "--" ] && shift
-
 
 # our node name
 echo job $SLURM_JOB_ID execution at: `date`
 NODE_HOSTNAME=`hostname -s`
 echo "TACC: running on node $NODE_HOSTNAME"
 
-# replace IPYTHON_BIN with a singularity exec command
-if [ ! -f ${SIF} ]; then
-    echo "TACC: WARNING - could not find a SIF file at ${SIF}"
-fi
-
 # configure singularity runtime
-if [ ! -z ${DOTENV} ] && [ -f ${DOTENV} ]; then
-    echo "TACC: using DOTENV=${DOTENV}"
-    export $(grep -v '^#' ${DOTENV} | xargs | envsubst)
+if [ ! -z ${DOTENV} ] ; then
+    if [ -f ${DOTENV} ]; then
+        echo "using DOTENV=${DOTENV}"
+        export $(grep -v '^#' ${DOTENV} | xargs | envsubst)
+    else
+        echo "could not find env file at DOTENV=${DOTENV}"
+        exit 1
+    fi
 fi
 SING_OPTS="--nv --home ${PWD} --bind /work2"
 
+# pull image if does not exist
+echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
+if [ ! -f ${SIF} ]; then
+    echo "TACC: pulling Singularity image to ${SIF}"
+    singularity pull ${SIF} ${URL}
+fi
+
 # entrypoint command
 echo "TACC: using singularity version $(singularity version)"
-IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} jupyter-notebook"
+IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} $@"
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter
@@ -95,6 +104,7 @@ echo "TACC: using jupyter command: $IPYTHON_BIN $IPYTHON_ARGS"
 nohup $IPYTHON_BIN $IPYTHON_ARGS &> $JUPYTER_LOGFILE && rm $NB_SERVERDIR/.jupyter_lock &
 IPYTHON_PID=$!
 echo "$NODE_HOSTNAME $IPYTHON_PID" > $NB_SERVERDIR/.jupyter_lock
+echo "TACC: sleeping for 60 seconds..."
 sleep 60
 JUPYTER_TOKEN=`grep -m 1 'token=' $JUPYTER_LOGFILE | cut -d'?' -f 2`
 LOCAL_IPY_PORT=5902

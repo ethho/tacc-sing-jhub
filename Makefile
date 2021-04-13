@@ -31,37 +31,24 @@ git:
 		exit 1; \
 	fi
 
-# ---------------------------- Docker/Singularity -----------------------------
-
-image: $(CONDA_ENV) | docker
-	docker build -t $(IMAGE) \
-		--build-arg CONDA_ENV="$<" \
-		.
-
-shell: image | docker
-	docker run --rm -it $(IMAGE) bash
-
-push: image | docker
-	docker push $(IMAGE)
+# -----------------------------------------------------------------------------
 
 $(SIF):
+	# Pulling singularity image from docker://$(IMAGE)
+	# Please ensure that you are running this command from an idev session.
 	singularity pull $@ docker://$(IMAGE)
+
+$(DOTENV):
+	touch $@
+
+sif: $(SIF)
 
 sing-shell: $(SIF) | singularity
 	singularity shell --nv --home $$PWD $(SIF)
 
-sif: $(SIF)
-
-# ----------------------------- Jupyter ---------------------------------------
-
-jupyter-mav2: $(SIF) $(DOTENV)
-	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing \
-		-i $(SIF) -e $(word 2, $^)
-	echo '' > jupyter.out
-	tail -f jupyter.out
-
-jupyter-frontera: $(SIF) $(DOTENV)
-	sbatch -A $(ALLOCATION) scripts/frontera.jupytersing \
-		-i $(SIF) -e $(word 2, $^)
+jupyter-%: $(DOTENV)
+	@[ -f scripts/$@.sh ] || (echo "ERROR: could not find script at scripts/$@.sh" && exit 1)
+	sbatch -A $(ALLOCATION) -p $(PARTITION) scripts/$@.sh \
+		-i $(SIF) -e $(DOTENV) -- jupyter-notebook
 	echo '' > jupyter.out
 	tail -f jupyter.out

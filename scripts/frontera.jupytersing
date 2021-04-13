@@ -44,7 +44,11 @@ echo "TACC: running on node $NODE_HOSTNAME"
 if [ ! -f ${SIMG} ]; then
     echo "TACC: ERROR - could not find a SIF file at ${SIMG}"
 fi
-IPYTHON_BIN="singularity exec --nv --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
+read -r -d '' IPYTHON_BIN <<- EOF
+    SINGULARITY_CACHEDIR="$STOCKYARD2/singularity_cache"
+    singularity exec --nv --env-file dotenv 
+    --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook
+EOF
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter

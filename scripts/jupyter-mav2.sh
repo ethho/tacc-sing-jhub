@@ -85,7 +85,7 @@ fi
 
 # entrypoint command
 echo "TACC: using singularity version $(singularity version)"
-IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} $@"
+IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} jupyter-notebook"
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
 
 NB_SERVERDIR=$HOME/.jupyter

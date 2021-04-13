@@ -49,6 +49,6 @@ sing-shell: $(SIF) | singularity
 jupyter-%: $(DOTENV)
 	@[ -f scripts/$@.sh ] || (echo "ERROR: could not find script at scripts/$@.sh" && exit 1)
 	sbatch -A $(ALLOCATION) -p $(PARTITION) scripts/$@.sh \
-		-i $(SIF) -e $(DOTENV) -- jupyter-notebook
+		-i $(SIF) -e $(DOTENV) 
 	echo '' > jupyter.out
 	tail -f jupyter.out

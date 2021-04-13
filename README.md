@@ -1,6 +1,6 @@
 # tacc-sing-jhub
 
-Launches a JupyterHub instance on TACC Maverick2 in a Singularity container.
+Launches a JupyterHub instance on TACC HPC in a Singularity container.
 
 **NOTE**: If your workflow is I/O intensive, please be sure to locate your working directory on the appropriate file system. Please see the [TACC documentation](https://portal.tacc.utexas.edu/tutorials/managingio) for details.
 
@@ -22,20 +22,19 @@ cd tacc-sing-jhub
         ```
         - [`dotenv/work2cache.env`](dotenv/work2cache.env) is an example that installs python packages on /work2
     - Singularity will pull the Docker `IMAGE` to POSIX path `SIF`.
-        - For instance, the following env file will `singularity pull ./my_image.sif docker://docker/whalesay:latest`:
+        - For instance, the following `config.mk` will `singularity pull ./my_image.sif docker://docker/whalesay:latest`:
         ```bash
-        # my_env.env
         IMAGE ?= docker/whalesay:latest 
         SIF ?= ./my_image.sif 
         ```
-        - The Docker `IMAGE` _must_ have the binary `jupyter-notebook` in its `PATH`
+        - The Docker `IMAGE` _must_ have the binary `jupyter-notebook` in its `$PATH`
     - Any of these variables can be overwritten when running `make` commands. 
-        - For instance, to overwrite `SIF` when pulling:
+        - For instance, to overwrite `PARTITION`:
         ```bash
-        SIF=./my_other_image.sif make pull
+        PARTITION="p100" make jupyter-mav2
         ```
         - See [GNU Make](https://www.gnu.org/software/make/) documentation for details.
-3. _Optional_: pull Singularity image
+3. **Optional**: manually pull Singularity image
     1. Enter `idev` session
     2. Pull image from Dockerhub to `.sif` file
     ```bash
@@ -63,3 +62,9 @@ Your jupyter notebook server is now running!
 Please point your favorite web browser to https://vis.tacc.utexas.edu:11296/?token=53ba17ctokengoeshere3b5ef243aa
 ```
 6. Check the job output file `./jupyter.out` for URL to JupyterHub, or for errors
+
+## Troubleshooting
+
+_WIP_
+
+- Check `$HOME/.jupyter/${NODE}.log` for additional debugging logs. The `$NODE` is the compute node that the job is running on; you can retrieve it using the `squeue` command.

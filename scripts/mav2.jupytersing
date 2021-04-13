@@ -41,18 +41,20 @@ NODE_HOSTNAME=`hostname -s`
 echo "TACC: running on node $NODE_HOSTNAME"
 
 # set cache for python packages
-# SING_ENV="SINGULARITYENV_PYTHONUSERBASE=\"$STOCKYARD2/jupyter_packages\" SINGULARITYENV_JUPYTER_PATH=\"$STOCKYARD2/jupyter_packages/share/jupyter:\" SINGULARITYENV_JUPYTER_WORK=\"$STOCKYARD2/jupyter_packages\" SINGULARITYENV_LOCAL_ENVS=\"$STOCKYARD2/jupyter_packages/envs\" SINGULARITYENV_CONDA_ENVS_PATH=\"$STOCKYARD2/jupyter_packages/envs:\" SINGULARITYENV_CONDA_PKGS_DIRS=\"$STOCKYARD2/jupyter_packages/pkgs\" SINGULARITY_CACHEDIR=\"$STOCKYARD2/singularity_cache\""
-SING_ENV=
+export SINGULARITYENV_PYTHONUSERBASE="$STOCKYARD2/jupyter_packages"
+export SINGULARITYENV_JUPYTER_PATH="$STOCKYARD2/jupyter_packages/share/jupyter:"
+export SINGULARITYENV_JUPYTER_WORK="$STOCKYARD2/jupyter_packages"
+export SINGULARITYENV_LOCAL_ENVS="$STOCKYARD2/jupyter_packages/envs"
+export SINGULARITYENV_CONDA_ENVS_PATH="$STOCKYARD2/jupyter_packages/envs:"
+export SINGULARITYENV_CONDA_PKGS_DIRS="$STOCKYARD2/jupyter_packages/pkgs"
+export SINGULARITY_CACHEDIR="$STOCKYARD2/singularity_cache"
+echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
 
 # replace IPYTHON_BIN with a singularity exec command
 if [ ! -f ${SIMG} ]; then
     echo "TACC: ERROR - could not find a SIF file at ${SIMG}"
 fi
-export SINGULARITY_CACHEDIR="$STOCKYARD2/singularity_cache"
-source ./dotenv
-echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
-IPYTHON_BIN="${SING_ENV} singularity exec --nv --bind /work2 --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
-echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"
+IPYTHON_BIN="singularity exec --nv --bind /work2 --home ${PWD} ${SING_MOUNT_OPTS} ${SIMG} jupyter-notebook"
 
 NB_SERVERDIR=$HOME/.jupyter
 IP_CONFIG=$NB_SERVERDIR/jupyter_notebook_config.py

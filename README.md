@@ -41,6 +41,7 @@ cd tacc-sing-jhub
     module load tacc-singularity
     make sif
     ```
+    3. Exit `idev` session
 5. Submit job via `sbatch`, using `make jupyter-frontera` or `make jupyter-mav2`:
 ```bash
 $ make jupyter-frontera

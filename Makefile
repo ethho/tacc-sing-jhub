@@ -49,6 +49,6 @@ sing-shell: $(SIF) | singularity
 jupyter-%: $(DOTENV)
 	@[ -f scripts/$@.sh ] || (echo "ERROR: could not find script at scripts/$@.sh" && exit 1)
 	sbatch -A $(ALLOCATION) -p $(PARTITION) scripts/$@.sh \
-		-i $(SIF) -e $(DOTENV) 
+		-i $(SIF) -e $(DOTENV) -u "docker://$(IMAGE)"
 	echo '' > jupyter.out
 	tail -f jupyter.out

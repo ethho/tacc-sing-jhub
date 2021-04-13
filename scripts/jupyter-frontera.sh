@@ -46,7 +46,7 @@ OPTIND=1
 SIF=
 DOTENV=
 URL=
-while getopts "i:e:" opt; do
+while getopts "i:e:u:" opt; do
     case "$opt" in
     i)  SIF=$OPTARG
         ;;

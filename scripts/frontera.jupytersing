@@ -45,12 +45,8 @@ module list
 OPTIND=1
 SIF=
 DOTENV=
-while getopts "h?i:e:" opt; do
+while getopts "i:e:" opt; do
     case "$opt" in
-    h|\?)
-        show_help
-        exit 0
-        ;;
     i)  SIF=$OPTARG
         ;;
     e)  DOTENV=$OPTARG
@@ -72,9 +68,9 @@ if [ ! -f ${SIF} ]; then
 fi
 
 # configure singularity runtime
-if [[ ! -z ${DOTENV} & -f ${DOTENV} ]]; then
+if [ ! -z ${DOTENV} ] && [ -f ${DOTENV} ]; then
     echo "TACC: using DOTENV=${DOTENV}"
-    source ${DOTENV}
+    export $(grep -v '^#' ${DOTENV} | xargs | envsubst)
 fi
 SING_OPTS="--nv --home ${PWD} --bind /work2"
 

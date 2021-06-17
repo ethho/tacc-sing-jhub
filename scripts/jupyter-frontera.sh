@@ -36,7 +36,7 @@
 # module configuration
 echo "TACC: unloading xalt"
 module unload xalt
-module load cuda/10.1
+module load cuda/10.0
 module load cudnn nccl tacc-singularity
 module list
 

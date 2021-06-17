@@ -67,6 +67,7 @@ Your jupyter notebook server is now running!
 Please point your favorite web browser to https://vis.tacc.utexas.edu:11296/?token=53ba17ctokengoeshere3b5ef243aa
 ```
 6. Check the job output file `./jupyter.out` for URL to JupyterHub, or for errors
+7. Please remember to `scancel` from your SSH session after you are done using JupyterHub. It frees up the node for others to use :)
 
 ## Troubleshooting
 

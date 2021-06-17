@@ -15,7 +15,7 @@ sing-shell: $(SIF)
 
 jupyter-%: $(DOTENV)
 	@[ -f scripts/$@.sh ] || (echo "ERROR: could not find script at scripts/$@.sh" && exit 1)
-	sbatch -A $(ALLOCATION) -p $(PARTITION) scripts/$@.sh \
+	sbatch -A $(ALLOCATION) -p $(PARTITION) -t $(TIME_MINUTES) scripts/$@.sh \
 		-i $(SIF) -e $(DOTENV) -u "docker://$(IMAGE)" -- jupyter-notebook
 	echo '' > jupyter.out
 	tail -f jupyter.out

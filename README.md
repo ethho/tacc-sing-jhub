@@ -9,6 +9,10 @@ Launches a JupyterHub instance on TACC HPC in a Singularity container.
 1. From a login node, clone this repo and cd to root of this repo
 ```bash
 git clone git@github.com:eho-tacc/tacc-sing-jhub.git tacc-sing-jhub
+
+# alternatively, clone one of the application-specific branches, for instance DeepLabCut
+git clone --single-branch --branch dlc git@github.com:eho-tacc/tacc-sing-jhub.git tacc-sing-jhub
+
 cd tacc-sing-jhub
 ```
 2. Configure environment by editing [`config.mk`](./config.mk)

@@ -7,7 +7,7 @@
 # Singularity container. The container must be saved as a SIF file, and its
 # POSIX path should be specified by setting the SIF variable below.
 #
-# To submit the job, issue: sbatch scripts/mav2.jupytersing -i ./my_image.sif
+# To submit the job, issue: sbatch scripts/jupyter-mav2.sh -i ./my_image.sif
 # 
 # You can also provide a path to an env file that is sourced OUTSIDE the
 # the container. For instance, to set the env variable SINGULARITYENV_SHELL, which
@@ -17,18 +17,21 @@
 #
 # and pass the path to env file using the -e option:
 #
-# sbatch scripts/mav2.jupytersing -i ./my_image.sif -e my_env.env
+# sbatch scripts/jupyter-mav2.sh -i ./my_image.sif -e my_env.env
 #
+# If the .sif file does not exist, the script will attempt to pull it from
+# DockerHub, e.g.
+#
+# sbatch scripts/jupyter-mav2.sh -i ./my_image.sif -u docker://docker/whalesay:latest
+
 # For more information, please consult the User Guide at:
 # http://www.tacc.utexas.edu/user-services/user-guides/maverick2-user-guide
 #-----------------------------------------------------------------------------
 #
 #SBATCH -J tvp_jupyter_sing           # Job name
 #SBATCH -o jupyter.out                # Name of stdout output file (%j expands to jobId)
-#SBATCH -p gtx                        # Queue name
 #SBATCH -N 1                          # Total number of nodes requested (56 cores/node)
 #SBATCH -n 1                          # Total number of mpi tasks requested
-#SBATCH -t 02:00:00                   # Run time (hh:mm:ss) - 2 hours
 
 # module configuration
 echo "TACC: unloading xalt"
@@ -83,7 +86,7 @@ if [ ! -f ${SIF} ]; then
     singularity pull ${SIF} ${URL}
 fi
 
-# entrypoint command
+# entrypoint
 echo "TACC: using singularity version $(singularity version)"
 IPYTHON_BIN="singularity exec ${SING_OPTS} ${SIF} $@"
 echo "TACC: using IPYTHON_BIN ${IPYTHON_BIN}"

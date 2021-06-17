@@ -10,3 +10,5 @@ DOTENV ?= ./dotenv/work2cache.env
 IMAGE ?= sd2e/tacc-ml-jupyter:centos7-cuda10-tf2.2-pt1.7
 # path to which Docker image will be pulled
 SIF ?= ./my_image.sif
+# where to mount the root of JupyterHub file expolorer (current working dir by default)
+WD ?= $$PWD

@@ -57,6 +57,8 @@ while getopts "i:e:u:" opt; do
         ;;
     u)  URL=$OPTARG
         ;;
+    d)  WD=$OPTARG
+        ;;
     esac
 done
 shift $((OPTIND-1))
@@ -77,12 +79,14 @@ if [ ! -z ${DOTENV} ] ; then
         exit 1
     fi
 fi
-SING_OPTS="--nv --home ${PWD} --bind /work2"
+[ -d $WD ] || WD=$PWD
+SING_OPTS="--nv --home ${WD} --bind /work2"
 
 # pull image if does not exist
 echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
 if [ ! -f ${SIF} ]; then
     echo "TACC: pulling Singularity image to ${SIF}"
+    [ -z $URL ] && echo "Could not find image at ${SIF}, and no DockerHub URL passed" && exit 1
     singularity pull ${SIF} ${URL}
 fi
 

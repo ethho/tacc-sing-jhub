@@ -9,6 +9,10 @@ Launches a JupyterHub instance on TACC HPC in a Singularity container.
 1. From a login node, clone this repo and cd to root of this repo
 ```bash
 git clone git@github.com:eho-tacc/tacc-sing-jhub.git tacc-sing-jhub
+
+# alternatively, clone one of the application-specific branches, for instance DeepLabCut
+git clone --single-branch --branch dlc git@github.com:eho-tacc/tacc-sing-jhub.git tacc-sing-jhub
+
 cd tacc-sing-jhub
 ```
 2. Configure environment by editing [`config.mk`](./config.mk)
@@ -63,6 +67,7 @@ Your jupyter notebook server is now running!
 Please point your favorite web browser to https://vis.tacc.utexas.edu:11296/?token=53ba17ctokengoeshere3b5ef243aa
 ```
 6. Check the job output file `./jupyter.out` for URL to JupyterHub, or for errors
+7. Please remember to `scancel` from your SSH session after you are done using JupyterHub. It frees up the node for others to use :)
 
 ## Troubleshooting
 

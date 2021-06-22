@@ -8,7 +8,7 @@
 # POSIX path should be specified by setting the SIF variable below.
 #
 # To submit the job, issue: sbatch scripts/jupyter-mav2.sh -i ./my_image.sif
-# 
+#
 # You can also provide a path to an env file that is sourced OUTSIDE the
 # the container. For instance, to set the env variable SINGULARITYENV_SHELL, which
 # is set as env variable SHELL inside the container, write an env file my_env.env:
@@ -49,7 +49,7 @@ OPTIND=1
 SIF=
 DOTENV=
 URL=
-while getopts "i:e:u:" opt; do
+while getopts "i:e:u:d:" opt; do
     case "$opt" in
     i)  SIF=$OPTARG
         ;;
@@ -86,9 +86,9 @@ SING_OPTS="--nv --home ${WD} --bind /work2"
 echo "TACC: using SINGULARITY_CACHEDIR=${SINGULARITY_CACHEDIR}"
 if [ ! -f ${SIF} ]; then
     echo "TACC: pulling Singularity image to ${SIF}"
-    [ -z $URL ] && echo "Could not find image at ${SIF}, and no DockerHub URL passed" && exit 1
     singularity pull ${SIF} ${URL}
 fi
+[ ! -f ${SIF} ] && [ -z $URL ] && echo "Could not find image at ${SIF}, and no DockerHub URL passed" && exit 1
 
 # entrypoint
 echo "TACC: using singularity version $(singularity version)"
